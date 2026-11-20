@@ -27,8 +27,11 @@ class Settings:
         if provider not in {"mock", "gemini_compat"}:
             raise ValueError("Invalid LLM_PROVIDER. Allowed values: mock, gemini_compat.")
 
-        key = os.getenv("LLM_API_KEY") or os.getenv("GEMINI_API_KEY")
-        key = key.strip() if key and key.strip() else None
+        key = (
+            os.getenv("LLM_API_KEY", "").strip()
+            or os.getenv("GEMINI_API_KEY", "").strip()
+            or None
+        )
         if provider != "mock" and not key:
             raise ValueError(
                 "LLM_API_KEY or GEMINI_API_KEY is required when LLM_PROVIDER is not mock."

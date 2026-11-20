@@ -137,7 +137,7 @@ def create_app(
             version=config.app_version,
             provider=config.llm_provider,
             model=config.llm_model,
-            mode="mock" if config.llm_provider == "mock" else "live",
+            mode="mock" if config.llm_provider == "mock" else "configured",
             storage="ok",
             additional_component="not_loaded",
             uptime_s=round(perf_counter() - started_at, 2),
