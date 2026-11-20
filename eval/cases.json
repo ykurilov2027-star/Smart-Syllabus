@@ -1,0 +1,49 @@
+[
+  {
+    "case_id": "intro-course",
+    "source_text": "Final essay due 2026-12-10. Weekly topics: Research methods. Essay is worth 30 of 100 points.",
+    "expected": {
+      "deadlines": [
+        {
+          "title": "Final essay",
+          "due_date": "2026-12-10",
+          "description": null
+        }
+      ],
+      "topics": [
+        {
+          "title": "Research methods",
+          "description": null
+        }
+      ],
+      "scores": [
+        {
+          "name": "Essay",
+          "points": 30,
+          "max_points": 100
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "project-course",
+    "source_text": "Project demonstration on 2026-11-30. Project: 50/100 points.",
+    "expected": {
+      "deadlines": [
+        {
+          "title": "Project demonstration",
+          "due_date": "2026-11-30",
+          "description": null
+        }
+      ],
+      "topics": [],
+      "scores": [
+        {
+          "name": "Project",
+          "points": 50,
+          "max_points": 100
+        }
+      ]
+    }
+  }
+]

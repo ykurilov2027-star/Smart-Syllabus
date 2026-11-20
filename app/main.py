@@ -8,8 +8,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 
 from app.errors import AppError, StorageConflict
-from app.models import ErrorResponse, HealthResponse, ParseResponse
+from app.gateways.llm_gateway import LLMGateway
+from app.models import ErrorResponse, HealthResponse, ParseRequest, ParseResponse
+from app.ai.orchestration import AIOrchestrator
+from app.providers.factory import create_provider
 from app.settings import Settings, get_settings
+from app.services.syllabus_service import SyllabusService
 from app.storage import SQLiteStorage
 from app.telemetry import configure_logging, log_event
 
@@ -27,6 +31,11 @@ def create_app(
     application = FastAPI(title="Smart Syllabus", version=config.app_version)
     application.state.settings = config
     application.state.storage = record_store
+    application.state.service = SyllabusService(
+        AIOrchestrator(LLMGateway(create_provider(config))),
+        record_store,
+        config.llm_model,
+    )
 
     @application.middleware("http")
     async def request_context(request: Request, call_next):
@@ -133,6 +142,12 @@ def create_app(
             additional_component="not_loaded",
             uptime_s=round(perf_counter() - started_at, 2),
         )
+
+    @application.post("/api/v1/syllabi/parse", response_model=ParseResponse)
+    async def parse_syllabus(payload: ParseRequest, request: Request) -> ParseResponse:
+        request_id = request.state.request_id
+        log_event(request_id, "controller", "Syllabus parse requested")
+        return request.app.state.service.parse(payload, request_id)
 
     @application.get("/api/v1/syllabi/{record_id}", response_model=ParseResponse)
     async def get_syllabus(record_id: UUID, request: Request) -> ParseResponse:
