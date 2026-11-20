@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 
 class ContractModel(BaseModel):
@@ -24,8 +24,14 @@ class Topic(ContractModel):
 
 class Score(ContractModel):
     name: NonEmptyText
-    points: float = Field(ge=0)
-    max_points: float = Field(gt=0)
+    points: float = Field(ge=0, allow_inf_nan=False)
+    max_points: float = Field(gt=0, allow_inf_nan=False)
+
+    @model_validator(mode="after")
+    def points_do_not_exceed_maximum(self) -> "Score":
+        if self.points > self.max_points:
+            raise ValueError("points cannot exceed max_points.")
+        return self
 
 
 class SyllabusExtraction(ContractModel):

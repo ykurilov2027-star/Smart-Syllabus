@@ -3,9 +3,10 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 from app.main import create_app
-from app.models import ParseRequest
+from app.models import ParseRequest, Score
 from app.services.syllabus_service import SyllabusService
 from app.settings import Settings
 from app.storage import SQLiteStorage
@@ -47,6 +48,10 @@ def test_api_parse_uses_mock_and_correlates_layer_logs(tmp_path: Path) -> None:
     assert body["result"]["deadlines"][0]["due_date"] == "2026-12-10"
     assert body["result"]["topics"][0]["title"] == "Research methods"
     assert body["result"]["scores"][0]["points"] == 30
+    with TestClient(application) as client:
+        stored_response = client.get(f"/api/v1/syllabi/{body['record_id']}")
+    assert stored_response.status_code == 200
+    assert stored_response.json()["result"] == body["result"]
 
     request_id = response.headers["X-Request-ID"]
     log_lines = settings.log_file.read_text(encoding="utf-8").splitlines()
@@ -111,8 +116,10 @@ def test_health_reports_mock_without_calling_model(tmp_path: Path) -> None:
     application = create_app(settings, SQLiteStorage(settings.db_path))
 
     with TestClient(application) as client:
+        page = client.get("/")
         response = client.get("/api/health")
 
+    assert "Smart Syllabus" in page.text
     assert response.status_code == 200
     assert response.json()["provider"] == "mock"
     assert response.json()["storage"] == "ok"
@@ -135,3 +142,8 @@ def test_settings_accept_gemini_compatibility_key(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setenv("GEMINI_API_KEY", "test-key-not-logged")
 
     assert Settings.from_env().llm_api_key == "test-key-not-logged"
+
+
+def test_score_validation_rejects_points_above_maximum() -> None:
+    with pytest.raises(ValidationError):
+        Score(name="Exam", points=101, max_points=100)

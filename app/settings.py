@@ -1,5 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
+import math
 import os
 from pathlib import Path
 
@@ -12,7 +13,7 @@ load_dotenv()
 class Settings:
     llm_provider: str
     llm_model: str
-    llm_api_key: str | None
+    llm_api_key: str | None = field(repr=False)
     llm_timeout_s: float
     db_path: Path
     log_file: Path
@@ -44,11 +45,11 @@ class Settings:
         except ValueError as exc:
             raise ValueError("LLM_TIMEOUT_S, MOCK_DELAY_MS, and MOCK_FAILURE_RATE must be numeric.") from exc
 
-        if timeout <= 0:
+        if not math.isfinite(timeout) or timeout <= 0:
             raise ValueError("LLM_TIMEOUT_S must be greater than zero.")
         if delay < 0:
             raise ValueError("MOCK_DELAY_MS cannot be negative.")
-        if not 0 <= failure_rate <= 1:
+        if not math.isfinite(failure_rate) or not 0 <= failure_rate <= 1:
             raise ValueError("MOCK_FAILURE_RATE must be between 0 and 1.")
 
         failure_kind = os.getenv("MOCK_FAILURE_KIND", "unavailable").strip().lower()

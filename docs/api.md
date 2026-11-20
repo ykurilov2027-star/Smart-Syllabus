@@ -19,7 +19,7 @@
 }
 ```
 
-Не викликає LLM. Відповідь не містить конфігураційного ключа, тексту запиту чи персональних даних. Недоступне сховище повертає контрольовану помилку 503.
+Не викликає LLM. `mode` дорівнює `mock` для локальної заглушки та `configured` для вибраного майбутнього провайдера (це не означає, що зовнішній виклик реалізовано). Відповідь не містить конфігураційного ключа, тексту запиту чи персональних даних. Недоступне сховище повертає контрольовану помилку 503.
 
 ## `POST /api/v1/syllabi/parse`
 
@@ -53,7 +53,7 @@
 }
 ```
 
-`due_date` — ISO `YYYY-MM-DD` або `null`, якщо дата не визначена; `points` та `max_points` — невід'ємні числа, максимальна оцінка додатна. Списки можуть бути порожніми. Текст джерела не включається до відповіді або запису.
+`due_date` — ISO `YYYY-MM-DD` або `null`, якщо дата не визначена; `points` та `max_points` — невід'ємні скінченні числа, `max_points` додатна, а `points` не перевищує `max_points`. Списки можуть бути порожніми. Текст джерела не включається до відповіді або запису.
 
 ## `GET /api/v1/syllabi/{record_id}`
 
@@ -83,6 +83,8 @@
 
 `Provider.generate(ProviderRequest) -> ProviderResponse`. Запит має `request_id`, `source_text`, необов'язковий `case_id`, `model`; відповідь містить тільки рядок `output_json` і використану назву моделі. Gateway декодує JSON і перевіряє його за `SyllabusExtraction`. Провайдер не пише в сховище та не формує HTTP-відповідь. Помилки провайдера — типізовані (`timeout`, `rate_limit`, `unavailable`, `not_implemented`); пошкоджений вихід обробляється gateway як `invalid_output`.
 
+Для локальної перевірки mock підтримує `MOCK_DELAY_MS`, `MOCK_FAILURE_RATE` і `MOCK_FAILURE_KIND=timeout|rate_limit|unavailable|invalid_json|mid_stream`. Через синхронний контракт `mid_stream` імітує обрізаний JSON-вихід, а не відкриває потокову HTTP-відповідь.
+
 ## Структурований вихід основного сценарію
 
-`SyllabusExtraction = {deadlines: Deadline[], topics: Topic[], scores: Score[]}`. `Deadline = {title: string, due_date: ISO date|null, description: string|null}`; `Topic = {title: string, description: string|null}`; `Score = {name: string, points: number >= 0, max_points: number > 0}`. Ця форма використовується провайдером, API та сховищем без окремих несумісних DTO.
+`SyllabusExtraction = {deadlines: Deadline[], topics: Topic[], scores: Score[]}`. `Deadline = {title: string, due_date: ISO date|null, description: string|null}`; `Topic = {title: string, description: string|null}`; `Score = {name: string, points: number >= 0, max_points: number > 0, points <= max_points}`. Числа скінченні. Ця форма використовується провайдером, API та сховищем без окремих несумісних DTO.

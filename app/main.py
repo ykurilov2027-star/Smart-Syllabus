@@ -126,7 +126,7 @@ def create_app(
         return FileResponse(STATIC_DIR / "index.html")
 
     @application.get("/api/health", response_model=HealthResponse)
-    async def health(request: Request) -> HealthResponse:
+    def health(request: Request) -> HealthResponse:
         request_id = request.state.request_id
         log_event(request_id, "controller", "Health check requested")
         if not request.app.state.storage.check():
@@ -144,13 +144,13 @@ def create_app(
         )
 
     @application.post("/api/v1/syllabi/parse", response_model=ParseResponse)
-    async def parse_syllabus(payload: ParseRequest, request: Request) -> ParseResponse:
+    def parse_syllabus(payload: ParseRequest, request: Request) -> ParseResponse:
         request_id = request.state.request_id
         log_event(request_id, "controller", "Syllabus parse requested")
         return request.app.state.service.parse(payload, request_id)
 
     @application.get("/api/v1/syllabi/{record_id}", response_model=ParseResponse)
-    async def get_syllabus(record_id: UUID, request: Request) -> ParseResponse:
+    def get_syllabus(record_id: UUID, request: Request) -> ParseResponse:
         request_id = request.state.request_id
         log_event(request_id, "controller", "Syllabus record requested")
         record = request.app.state.storage.get(str(record_id), request_id)
