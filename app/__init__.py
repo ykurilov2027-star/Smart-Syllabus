@@ -1,0 +1,1 @@
+"""Smart Syllabus application package."""
